@@ -24,6 +24,7 @@ router.post("/", cookieJwtAuth, async (req, res) => {
         image: uploadedResponse.secure_url,
         description: req.body.description,
         userId: req.user.id,
+        tags: req.body.tags,
       },
     });
   } catch (error) {

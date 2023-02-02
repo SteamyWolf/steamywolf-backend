@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const cookieJwtAuth = require("../middleware/cookieJwtAuth");
 
 const prisma = new PrismaClient();
 
@@ -51,7 +52,7 @@ router.post("/login", async (req, res) => {
         .cookie("token", token, {
           httpOnly: true,
           sameSite: "none",
-          secure: false,
+          secure: true,
           maxAge: 1000 * 60 * 60 * 60,
         })
         .json({ message: "Logged in successfully", login: true });
@@ -66,6 +67,18 @@ router.post("/login", async (req, res) => {
       .status(500)
       .json({ message: "There was an issue trying to hash the password" });
   }
+});
+
+router.get("/logout", (req, res) => {
+  return res
+    .status(200)
+    .clearCookie("token")
+    .json({ message: "Logged out successfully" })
+    .end();
+});
+
+router.get("/status", cookieJwtAuth, (req, res) => {
+  return res.status(200).json({ message: "User session valid", status: true });
 });
 
 module.exports = router;
