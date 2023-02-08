@@ -16,6 +16,14 @@ router.post("/", cookieJwtAuth, async (req, res) => {
       .json({ message: "There was an error uploading. Please try again." });
   }
 
+  let nsfw;
+  if (req.body.nsfw === "nsfw") {
+    nsfw = true;
+  }
+  if (req.body.nsfw === "sfw") {
+    nsfw = false;
+  }
+
   let newPost;
   try {
     newPost = await post.create({
@@ -25,6 +33,7 @@ router.post("/", cookieJwtAuth, async (req, res) => {
         description: req.body.description,
         userId: req.user.id,
         tags: req.body.tags,
+        NSFW: nsfw,
       },
     });
   } catch (error) {

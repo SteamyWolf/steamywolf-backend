@@ -33,6 +33,7 @@ model Post {
   user        User      @relation(fields: [userId], references: [id])
   userId      Int
   comments    Comment[]
+  NSFW        Boolean   @default(false)
 }
 
 model Comment {
