@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { username, email, password, active, thumbnail } = req.body;
+  const { username, email, password } = req.body;
 
   try {
     const userExists = await user.findUnique({
@@ -57,8 +57,6 @@ router.post("/", async (req, res) => {
         username: username,
         email: email,
         password: hashedPassword,
-        active: active,
-        thumbnail: thumbnail,
       },
     });
 

@@ -81,4 +81,21 @@ router.get("/status", cookieJwtAuth, (req, res) => {
   return res.status(200).json({ message: "User session valid", status: true });
 });
 
+router.get("/:username", async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        username: req.params.username,
+      },
+    });
+    if (user) {
+      return res.status(200).json({ message: "User already exists" });
+    } else {
+      return res.status(200).json({ message: "Username available" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "There was a server error" }, error);
+  }
+});
+
 module.exports = router;

@@ -19,7 +19,7 @@ model User {
   comments  Comment[]
   favorites Json[]
   active    Boolean   @default(false)
-  thumbnail String
+  thumbnail String?
 }
 
 model Post {
