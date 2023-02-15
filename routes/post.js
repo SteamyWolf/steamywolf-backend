@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const { PrismaClient } = require("@prisma/client");
+const blurhash = require("blurhash");
 
 const { post, user, recentSubmissions, comment } = new PrismaClient();
 
@@ -23,6 +24,7 @@ router.get("/find/:postId", async (req, res) => {
         userId: true,
         comments: true,
         tags: true,
+        hash: true,
       },
     });
   } catch (error) {
@@ -30,6 +32,8 @@ router.get("/find/:postId", async (req, res) => {
       .status(500)
       .json({ message: "Could not find post. Server error", error });
   }
+
+  foundPost.hash = blurhash.decode(foundPost.hash);
 
   let mappedCommentsWithUsers;
   if (foundPost.comments.length) {

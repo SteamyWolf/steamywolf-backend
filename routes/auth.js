@@ -42,7 +42,6 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(user, process.env.SECRET_JWT_KEY, {
       expiresIn: "1d",
     });
-    console.log(token);
 
     if (hashedPassword) {
       return res

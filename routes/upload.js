@@ -2,10 +2,40 @@ const router = require("express").Router();
 const { PrismaClient } = require("@prisma/client");
 const cookieJwtAuth = require("../middleware/cookieJwtAuth");
 const cloudinary = require("cloudinary").v2;
+const blurhash = require("blurhash");
+const Jimp = require("jimp");
 
 const { post, user, recentSubmissions } = new PrismaClient();
 
 router.post("/", cookieJwtAuth, async (req, res) => {
+  let base64String = req.body.file;
+  const base64Data = base64String.replace(/^data:image\/\w+;base64,/, "");
+  const image = Buffer.from(base64Data, "base64");
+
+  let hash;
+  try {
+    hash = await new Promise((resolve, reject) => {
+      Jimp.read(image, (err, img) => {
+        if (err) reject(err);
+        const width = img.bitmap.width;
+        const height = img.bitmap.height;
+        const blurhashString = blurhash.encode(
+          img.bitmap.data,
+          width,
+          height,
+          4,
+          3
+        );
+        resolve(blurhashString);
+      });
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "There was an error with creating the hash for this image.",
+      error,
+    });
+  }
+
   let uploadedResponse;
   try {
     uploadedResponse = await cloudinary.uploader.upload(req.body.file);
@@ -33,6 +63,7 @@ router.post("/", cookieJwtAuth, async (req, res) => {
         description: req.body.description,
         userId: req.user.id,
         tags: req.body.tags,
+        hash: hash,
         NSFW: nsfw,
       },
     });
