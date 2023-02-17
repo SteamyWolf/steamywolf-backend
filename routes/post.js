@@ -54,8 +54,6 @@ router.get("/find/:postId", async (req, res) => {
     }
   }
 
-  // console.log(mappedCommentsWithUsers);
-
   let resolvedMappedCommentsWithUsers;
   if (mappedCommentsWithUsers && mappedCommentsWithUsers.length) {
     try {
@@ -92,6 +90,72 @@ router.get("/find/:postId", async (req, res) => {
     return res
       .status(500)
       .json({ message: "Unable to find user associated to post.", error });
+  }
+});
+
+router.get("/search/:query/:skip/:take", async (req, res) => {
+  const { query, skip, take } = req.params;
+  try {
+    const posts = await post.findMany({
+      where: {
+        tags: {
+          has: query,
+        },
+      },
+      skip: +skip,
+      take: +take,
+      orderBy: {
+        id: "desc",
+      },
+    });
+
+    console.log(posts);
+
+    const mappedSubmissions = posts.map(async (submission) => {
+      const userSubmission = await user.findUnique({
+        where: {
+          id: submission.userId,
+        },
+        select: {
+          id: true,
+          username: true,
+        },
+      });
+      return {
+        id: submission.id,
+        user: userSubmission,
+        post: submission,
+      };
+    });
+
+    const resolvedSubmissions = await Promise.all(mappedSubmissions);
+
+    return res.status(200).json(resolvedSubmissions);
+  } catch (error) {
+    return res.status(500).json({
+      message: "There was a server issue with getting the queried posts",
+      error,
+    });
+  }
+});
+
+router.get("/search-count/:query", async (req, res) => {
+  const { query } = req.params;
+
+  try {
+    const count = await post.count({
+      where: {
+        tags: {
+          has: query,
+        },
+      },
+    });
+    return res.status(200).json(count);
+  } catch (error) {
+    return res.status(500).json({
+      message: "There was a server issue getting the count of the search query",
+      error,
+    });
   }
 });
 

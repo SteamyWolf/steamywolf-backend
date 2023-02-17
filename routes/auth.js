@@ -54,7 +54,7 @@ router.post("/login", async (req, res) => {
           secure: true,
           maxAge: 1000 * 60 * 60 * 60,
         })
-        .json({ message: "Logged in successfully", login: true });
+        .json({ message: "Logged in successfully", login: true, user });
     }
     if (!hashedPassword) {
       return res
@@ -76,8 +76,44 @@ router.get("/logout", (req, res) => {
     .end();
 });
 
+router.get("/current-user/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const foundUser = await prisma.user.findUnique({
+      where: {
+        id: +id,
+      },
+      select: {
+        id: true,
+        username: true,
+        posts: true,
+        comments: true,
+        favorites: true,
+        thumbnail: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+    if (foundUser) {
+      return res
+        .status(200)
+        .json({ message: "Complete user information", foundUser });
+    } else {
+      return res
+        .status(200)
+        .json({ message: "No current user found. User must not be logged in" });
+    }
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ message: "Server error trying to get current user", error });
+  }
+});
+
 router.get("/status", cookieJwtAuth, (req, res) => {
-  return res.status(200).json({ message: "User session valid", status: true });
+  return res
+    .status(200)
+    .json({ message: "User session valid", status: true, user: req.user });
 });
 
 router.get("/:username", async (req, res) => {
