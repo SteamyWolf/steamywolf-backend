@@ -7,6 +7,57 @@ const Jimp = require("jimp");
 
 const { post, user, recentSubmissions } = new PrismaClient();
 
+router.post("/thumbnail", cookieJwtAuth, async (req, res) => {
+  console.log(req.user);
+
+  try {
+    const deletedImage = await cloudinary.uploader.destroy(req.body.public_id);
+    console.log(deletedImage);
+  } catch (error) {
+    return res.status(500).json({
+      message: "There was a server error deleting the old image",
+      error,
+    });
+  }
+
+  let uploadedResponse;
+  try {
+    uploadedResponse = await cloudinary.uploader.upload(req.body.file);
+  } catch (error) {
+    return res.status(500).json({
+      message:
+        "There was a server issue trying to upload a new account image to cloudinary",
+      error,
+    });
+  }
+
+  try {
+    const foundUser = await user.update({
+      where: {
+        username: req.user.username,
+      },
+      data: {
+        thumbnail: uploadedResponse.secure_url,
+      },
+    });
+    if (!foundUser) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    return res
+      .status(200)
+      .json({
+        message: "New account thumbnail successfully saved",
+        thumbnail: uploadedResponse.secure_url,
+      });
+  } catch (error) {
+    return res.status(500).json({
+      message:
+        "Server error trying to find a user for uploading new account image",
+      error,
+    });
+  }
+});
+
 router.post("/", cookieJwtAuth, async (req, res) => {
   let base64String = req.body.file;
   const base64Data = base64String.replace(/^data:image\/\w+;base64,/, "");
