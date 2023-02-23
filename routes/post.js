@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const { PrismaClient } = require("@prisma/client");
+const cookieJwtAuth = require("../middleware/cookieJwtAuth");
 
 const { post, user, recentSubmissions, comment } = new PrismaClient();
 
@@ -187,6 +188,106 @@ router.delete("/", async (req, res) => {
       message: "There was an issue deleting your post. Please try again",
       error,
     });
+  }
+});
+
+router.post("/add-favorite", cookieJwtAuth, async (req, res) => {
+  let foundUser;
+  try {
+    foundUser = await user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+      select: {
+        favorites: true,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error trying to find the user to add a new favorite",
+    });
+  }
+
+  let newFavorites = [...foundUser.favorites, req.body.favoritePost];
+
+  try {
+    const addedFavoriteUser = await user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        favorites: newFavorites,
+      },
+      select: {
+        comments: true,
+        createdAt: true,
+        email: true,
+        favorites: true,
+        id: true,
+        posts: true,
+        thumbnail: true,
+        username: true,
+        active: true,
+      },
+    });
+    return res
+      .status(200)
+      .json({ message: "Successfully add a new favorite", addedFavoriteUser });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error adding a new favorite" });
+  }
+});
+
+router.post("/remove-favorite", cookieJwtAuth, async (req, res) => {
+  let foundUser;
+  try {
+    foundUser = await user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+      select: {
+        favorites: true,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error trying to find the user to remove a new favorite",
+    });
+  }
+
+  const newFavorites = foundUser.favorites.filter(
+    (favorite) => favorite.id !== +req.body.postId
+  );
+
+  try {
+    const removedFavoriteUser = await user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        favorites: newFavorites,
+      },
+      select: {
+        comments: true,
+        createdAt: true,
+        email: true,
+        favorites: true,
+        id: true,
+        posts: true,
+        thumbnail: true,
+        username: true,
+        active: true,
+      },
+    });
+    return res
+      .status(200)
+      .json({ message: "Successfully removed favorite", removedFavoriteUser });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error adding a new favorite" });
   }
 });
 
