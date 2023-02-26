@@ -140,12 +140,13 @@ router.get("/search/:query/:skip/:take", async (req, res) => {
   }
 });
 
-router.get("/search-count/:query", async (req, res) => {
+router.get("/search-count/:query/:nsfw", async (req, res) => {
   const { query } = req.params;
 
   try {
     const count = await post.count({
       where: {
+        NSFW: req.params.nsfw === "true" ? true : false,
         tags: {
           has: query,
         },

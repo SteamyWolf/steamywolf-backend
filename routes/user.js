@@ -3,6 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
+const cookieJwtAuth = require("../middleware/cookieJwtAuth");
 
 const { user } = new PrismaClient();
 
@@ -211,6 +212,36 @@ router.post("/", async (req, res) => {
     return res.status(500).json({
       message:
         "There was an issue with creating the user into the database. Please try again",
+      error,
+    });
+  }
+});
+
+router.post("/nsfw", cookieJwtAuth, async (req, res) => {
+  try {
+    const foundUser = await user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        nsfw_checked: req.body.nsfw,
+      },
+      select: {
+        comments: true,
+        createdAt: true,
+        email: true,
+        favorites: true,
+        id: true,
+        nsfw_checked: true,
+        posts: true,
+        thumbnail: true,
+        username: true,
+      },
+    });
+    return res.status(200).json({ message: "Updated nsfw_checked", foundUser });
+  } catch (error) {
+    return res.status(500).json({
+      message: "There was a server error updating the nsfw_checked",
       error,
     });
   }

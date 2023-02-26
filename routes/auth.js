@@ -19,6 +19,7 @@ router.post("/login", async (req, res) => {
         password: true,
         email: true,
         id: true,
+        nsfw_checked: true,
       },
     });
 
@@ -92,6 +93,7 @@ router.get("/current-user/:id", async (req, res) => {
         thumbnail: true,
         email: true,
         createdAt: true,
+        nsfw_checked: true,
       },
     });
     if (foundUser) {

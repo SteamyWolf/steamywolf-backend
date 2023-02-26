@@ -11,16 +11,17 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  username  String    @unique @db.VarChar(255)
-  password  String
-  posts     Post[]
-  comments  Comment[]
-  favorites Json[]
-  active    Boolean   @default(false)
-  thumbnail String?
-  createdAt DateTime  @default(now())
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  username     String    @unique @db.VarChar(255)
+  password     String
+  posts        Post[]
+  comments     Comment[]
+  favorites    Json[]
+  active       Boolean   @default(false)
+  thumbnail    String?
+  createdAt    DateTime  @default(now())
+  nsfw_checked Boolean   @default(false)
 }
 
 model Post {
