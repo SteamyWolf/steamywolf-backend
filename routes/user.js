@@ -134,15 +134,21 @@ router.post("/reset-password-request", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const users = await user.findMany({
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      posts: true,
-    },
-  });
-  res.json(users);
+  try {
+    const users = await user.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        posts: true,
+      },
+    });
+    return res.status(200).json(users);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "There was an issue with geting all users", error });
+  }
 });
 
 router.post("/email", async (req, res) => {
@@ -186,6 +192,33 @@ router.post("/", async (req, res) => {
       message: "There was a server error with your request. Please try again",
       error,
     });
+  }
+
+  try {
+    const emailExists = await user.findUnique({
+      where: {
+        email: email,
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    if (emailExists) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Email already exists. Try logging in with that email instead",
+        });
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({
+        message: "There was a server issue with fetching the user email",
+        error,
+      });
   }
 
   let hashedPassword;
