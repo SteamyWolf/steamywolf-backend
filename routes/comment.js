@@ -5,7 +5,6 @@ const cookieJwtAuth = require("../middleware/cookieJwtAuth");
 const { post, user, comment } = new PrismaClient();
 
 router.post("/", cookieJwtAuth, async (req, res) => {
-  console.log(req.user);
   try {
     const newComment = await comment.create({
       data: {

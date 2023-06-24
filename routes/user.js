@@ -38,8 +38,9 @@ router.post("/forgot-password", async (req, res) => {
         subject: "SteamyWolf: Reset Password Request",
         html: `
           <p>It looks like you have sent a request to reset your password.</p><br>
-          <p>Please click on the link below to initiate the password reset process</p>
-          <a href="${link}">${link}</a>
+          <p>Please click on the link below to initiate the password reset process.</p>
+          <a href="${link}">${link}</a><br>
+          <p>If you have not done this then please respond to this email and the account administrator will assist you.</p>
         `,
       };
 
@@ -47,7 +48,7 @@ router.post("/forgot-password", async (req, res) => {
         if (err) {
           return res.status(500).json({
             message: "Error trying to send password request email",
-            error,
+            err,
           });
         }
         return res
@@ -62,8 +63,6 @@ router.post("/forgot-password", async (req, res) => {
 
 router.get("/reset-password/:id/:token", async (req, res) => {
   const { id, token } = req.params;
-
-  console.log("id", id, "token", token);
 
   // Check if this id exists in the database
   let foundUser;

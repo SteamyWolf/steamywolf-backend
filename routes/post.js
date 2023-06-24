@@ -110,8 +110,6 @@ router.get("/search/:query/:skip/:take", async (req, res) => {
       },
     });
 
-    console.log(posts);
-
     const mappedSubmissions = posts.map(async (submission) => {
       const userSubmission = await user.findUnique({
         where: {

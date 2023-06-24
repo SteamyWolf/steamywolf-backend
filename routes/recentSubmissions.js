@@ -1,13 +1,14 @@
 const router = require("express").Router();
 const { PrismaClient } = require("@prisma/client");
 
-const { user, recentSubmissions } = new PrismaClient();
+const { user, recentSubmissions, post } = new PrismaClient();
 
+// This should be pulling from the post section of the db and not the recent submissions
 router.get("/browse/:skip/:take/:nsfw", async (req, res) => {
   try {
     let submissions;
     if (req.params.nsfw === "true") {
-      submissions = await recentSubmissions.findMany({
+      submissions = await post.findMany({
         skip: +req.params.skip,
         take: +req.params.take,
         orderBy: {
@@ -15,12 +16,9 @@ router.get("/browse/:skip/:take/:nsfw", async (req, res) => {
         },
       });
     } else {
-      submissions = await recentSubmissions.findMany({
+      submissions = await post.findMany({
         where: {
-          submissions: {
-            path: ["NSFW"],
-            equals: false,
-          },
+          NSFW: false,
         },
         skip: +req.params.skip,
         take: +req.params.take,
@@ -33,7 +31,7 @@ router.get("/browse/:skip/:take/:nsfw", async (req, res) => {
     const mappedSubmissions = submissions.map(async (submission) => {
       const userSubmission = await user.findUnique({
         where: {
-          id: submission.submissions.userId,
+          id: submission.userId
         },
         select: {
           id: true,
@@ -46,7 +44,6 @@ router.get("/browse/:skip/:take/:nsfw", async (req, res) => {
         post: submission,
       };
     });
-
     const resolvedSubmissions = await Promise.all(mappedSubmissions);
 
     return res.status(200).json(resolvedSubmissions);
@@ -57,16 +54,20 @@ router.get("/browse/:skip/:take/:nsfw", async (req, res) => {
   }
 });
 
+
+//This should be in the post route. The url call will need to be updated in the front-end
 router.get("/count/:nsfw", async (req, res) => {
   try {
-    const count = await recentSubmissions.count({
-      where: {
-        submissions: {
-          path: ["NSFW"],
-          equals: req.params.nsfw === "true" ? true : false,
+    let count;
+    if (req.params.nsfw === 'true') {
+      count = await post.count();
+    } else {
+      count = await post.count({
+        where: {
+          NSFW: false
         },
-      },
-    });
+      });
+    }
     return res.status(200).json(count);
   } catch (error) {
     return res
