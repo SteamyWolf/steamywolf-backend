@@ -94,14 +94,32 @@ router.get("/find/:postId", async (req, res) => {
   }
 });
 
-router.get("/search/:query/:skip/:take", async (req, res) => {
+router.get("/search/:query/:skip/:take/:nsfw", async (req, res) => {
   const { query, skip, take } = req.params;
   try {
     const posts = await post.findMany({
       where: {
-        tags: {
-          has: query,
-        },
+        OR: [
+          {
+            user: {
+              username: {
+                contains: query,
+                mode: 'insensitive'
+              }
+            }
+          },
+          {
+            tags: {
+              has: query,
+            },
+          },
+          {
+            title: {
+              contains: query,
+              mode: 'insensitive'
+            }
+          }
+        ]
       },
       skip: +skip,
       take: +take,

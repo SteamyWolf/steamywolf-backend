@@ -279,4 +279,19 @@ router.post("/nsfw", cookieJwtAuth, async (req, res) => {
   }
 });
 
+// This route is being used to fetch the correct user for each favorite in the account page. It can technically be used in other places if needed. Not ideal way.
+router.get('/userId/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const foundUser = await user.findUnique({
+      where: {
+        id: +userId
+      }
+    });
+    return res.status(200).json({message: 'Found user', foundUser});
+  } catch (error) {
+    return res.status(500).json({message: 'There was a server issue finding the user for the associated favorite post', error});
+  }
+})
+
 module.exports = router;

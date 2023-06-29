@@ -9,6 +9,7 @@ const recentSubmissionsRoute = require("./routes/recentSubmissions");
 const authRoute = require("./routes/auth");
 const uploadRoute = require("./routes/upload");
 const commentRoute = require("./routes/comment");
+dotenv.config();
 
 const cloudinary = require("cloudinary").v2;
 cloudinary.config({
@@ -19,7 +20,6 @@ cloudinary.config({
 
 const app = express();
 
-dotenv.config();
 const PORT = process.env.PORT || 4000;
 
 app.use(cookieParser());
