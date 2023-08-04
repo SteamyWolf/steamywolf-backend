@@ -33,6 +33,10 @@ router.get("/find/:postId", async (req, res) => {
       .json({ message: "Could not find post. Server error", error });
   }
 
+  if (!foundPost) {
+    return res.status(500).json({ message: "Could not find post. Server error" });
+  }
+
   let mappedCommentsWithUsers;
   if (foundPost.comments.length) {
     try {
@@ -170,10 +174,10 @@ router.get("/search-count/:query/:nsfw", async (req, res) => {
     });
     return res.status(200).json(count);
   } catch (error) {
-    return res.status(500).json({
-      message: "There was a server issue getting the count of the search query",
-      error,
-    });
+      return res.status(500).json({
+        message: "There was a server issue getting the count of the search query",
+        error,
+      });
   }
 });
 
@@ -191,21 +195,41 @@ router.get("/:userId", async (req, res) => {
 });
 
 // DELETES A SINGLE POST BASED ON POST ID
-router.delete("/", async (req, res) => {
-  const { postId } = req.body;
+router.delete("/:postId", async (req, res) => {
+  const { postId } = req.params;
+  console.log(postId);
+  let deletedPost;
   try {
-    const deletedPost = await post.delete({
+    deletedPost = await post.delete({
       where: {
-        id: postId,
+        id: +postId,
       },
     });
-    res.status(200).json(deletedPost);
   } catch (error) {
-    res.status(400).json({
-      message: "There was an issue deleting your post. Please try again",
-      error,
-    });
+      return res.status(400).json({
+        message: "DeletedPost issue.",
+        error,
+      });
   }
+
+  let deletedRecentSubmission;
+  try {
+    deletedRecentSubmission = await recentSubmissions.delete({
+      where: {
+        submissions: {
+          path: ["id"],
+          equals: deletedPost.id
+        }
+      }
+    })
+  } catch (error) {
+      return res.status(400).json({
+        message: "DeletedRecentSubmission issue",
+        error,
+      });
+  }
+
+  return res.status(200).json({deletedPost, deletedRecentSubmission});
 });
 
 router.post("/add-favorite", cookieJwtAuth, async (req, res) => {
@@ -220,9 +244,9 @@ router.post("/add-favorite", cookieJwtAuth, async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "Server error trying to find the user to add a new favorite",
-    });
+      return res.status(500).json({
+        message: "Server error trying to find the user to add a new favorite",
+      });
   }
 
   let newFavorites = [...foundUser.favorites, req.body.favoritePost];

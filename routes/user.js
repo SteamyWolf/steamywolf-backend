@@ -279,7 +279,7 @@ router.post("/nsfw", cookieJwtAuth, async (req, res) => {
   }
 });
 
-// This route is being used to fetch the correct user for each favorite in the account page. It can technically be used in other places if needed. Not ideal way.
+// Fetches the correct user for each favorited post in the account page. It can technically be used in other places if needed. Not ideal way.
 router.get('/userId/:userId', async (req, res) => {
   const { userId } = req.params;
   try {

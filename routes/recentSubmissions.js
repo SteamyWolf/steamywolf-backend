@@ -81,7 +81,7 @@ router.get("/:nsfw", async (req, res) => {
   try {
     if (req.params.nsfw === "true") {
       submissions = await recentSubmissions.findMany({
-        take: 20,
+        take: -20,
       });
     } else {
       submissions = await recentSubmissions.findMany({
@@ -94,7 +94,6 @@ router.get("/:nsfw", async (req, res) => {
         },
       });
     }
-
     const mappedSubmissions = submissions.map(async (submission) => {
       const userSubmission = await user.findUnique({
         where: {
