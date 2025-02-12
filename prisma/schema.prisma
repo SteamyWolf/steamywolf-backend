@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env(if env("NODE_ENV") == "production" then "DATABASE_URL" else "DATABASE_URL_DEV")
+  url      = env("DATABASE_URL")
 }
 
 model User {
