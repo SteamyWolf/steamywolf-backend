@@ -8,13 +8,15 @@ const Jimp = require("jimp");
 const { post, user, recentSubmissions } = new PrismaClient();
 
 router.post("/thumbnail", cookieJwtAuth, async (req, res) => {
-  try {
-    const deletedImage = await cloudinary.uploader.destroy(req.body.public_id);
-  } catch (error) {
-    return res.status(500).json({
-      message: "There was a server error deleting the old image",
-      error,
-    });
+  if (req.body.public_id) {
+    try {
+      await cloudinary.uploader.destroy(req.body.public_id);
+    } catch (error) {
+      return res.status(500).json({
+        message: "There was a server error deleting the old image",
+        error,
+      });
+    }
   }
 
   let uploadedResponse;

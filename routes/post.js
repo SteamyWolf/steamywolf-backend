@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const { PrismaClient } = require("@prisma/client");
 const cookieJwtAuth = require("../middleware/cookieJwtAuth");
+const cloudinary = require("cloudinary").v2;
 
 const { post, user, recentSubmissions, comment } = new PrismaClient();
 
@@ -34,7 +35,9 @@ router.get("/find/:postId", async (req, res) => {
   }
 
   if (!foundPost) {
-    return res.status(500).json({ message: "Could not find post. Server error" });
+    return res
+      .status(500)
+      .json({ message: "Could not find post. Server error" });
   }
 
   let mappedCommentsWithUsers;
@@ -108,9 +111,9 @@ router.get("/search/:query/:skip/:take/:nsfw", async (req, res) => {
             user: {
               username: {
                 contains: query,
-                mode: 'insensitive'
-              }
-            }
+                mode: "insensitive",
+              },
+            },
           },
           {
             tags: {
@@ -120,10 +123,10 @@ router.get("/search/:query/:skip/:take/:nsfw", async (req, res) => {
           {
             title: {
               contains: query,
-              mode: 'insensitive'
-            }
-          }
-        ]
+              mode: "insensitive",
+            },
+          },
+        ],
       },
       skip: +skip,
       take: +take,
@@ -174,10 +177,10 @@ router.get("/search-count/:query/:nsfw", async (req, res) => {
     });
     return res.status(200).json(count);
   } catch (error) {
-      return res.status(500).json({
-        message: "There was a server issue getting the count of the search query",
-        error,
-      });
+    return res.status(500).json({
+      message: "There was a server issue getting the count of the search query",
+      error,
+    });
   }
 });
 
@@ -195,9 +198,20 @@ router.get("/:userId", async (req, res) => {
 });
 
 // DELETES A SINGLE POST BASED ON POST ID
-router.delete("/:postId", async (req, res) => {
+router.delete("/:postId/:public_id", async (req, res) => {
   const { postId } = req.params;
+  const { public_id } = req.params;
   console.log(postId);
+
+  try {
+    await cloudinary.uploader.destroy(public_id);
+  } catch (error) {
+    return res.status(500).json({
+      message: "There was a server error deleting the post from cloudinary",
+      error,
+    });
+  }
+
   let deletedPost;
   try {
     deletedPost = await post.delete({
@@ -206,30 +220,31 @@ router.delete("/:postId", async (req, res) => {
       },
     });
   } catch (error) {
-      return res.status(400).json({
-        message: "DeletedPost issue.",
-        error,
-      });
+    return res.status(400).json({
+      message: "DeletedPost issue.",
+      error,
+    });
   }
 
+  console.log("deleted post id", deletedPost.id);
   let deletedRecentSubmission;
   try {
     deletedRecentSubmission = await recentSubmissions.delete({
       where: {
         submissions: {
           path: ["id"],
-          equals: deletedPost.id
-        }
-      }
-    })
+          equals: deletedPost.id,
+        },
+      },
+    });
   } catch (error) {
-      return res.status(400).json({
-        message: "DeletedRecentSubmission issue",
-        error,
-      });
+    return res.status(400).json({
+      message: "DeletedRecentSubmission issue",
+      error,
+    });
   }
 
-  return res.status(200).json({deletedPost, deletedRecentSubmission});
+  return res.status(200).json({ deletedPost, deletedRecentSubmission });
 });
 
 router.post("/add-favorite", cookieJwtAuth, async (req, res) => {
@@ -244,9 +259,9 @@ router.post("/add-favorite", cookieJwtAuth, async (req, res) => {
       },
     });
   } catch (error) {
-      return res.status(500).json({
-        message: "Server error trying to find the user to add a new favorite",
-      });
+    return res.status(500).json({
+      message: "Server error trying to find the user to add a new favorite",
+    });
   }
 
   let newFavorites = [...foundUser.favorites, req.body.favoritePost];
